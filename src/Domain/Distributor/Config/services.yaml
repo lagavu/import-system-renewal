@@ -1,0 +1,3 @@
+services:
+  App\Domain\Distributor\Command\Handler\ImportProductHandler:
+    autowire: true
