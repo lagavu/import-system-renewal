@@ -1,0 +1,16 @@
+@import "~bootstrap/dist/css/bootstrap.css";
+
+h5 {
+    font-weight: bold;
+    margin-bottom: 30px;
+    font-size: 16px;
+}
+
+.nav-link {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.custom-file-label { opacity: 0; }
+.custom-file-input { opacity: 1; }
+.d-block > .badge  { display: none; }
