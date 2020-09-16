@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Distributor{% endblock %}
+
+{% block body %}
+
+    {% include 'includes/navbar.html.twig' %}
+
+    <div class="container mt-5 shadow p-3 mb-5 bg-white rounded p-5">
+        <h5>Список аптек</h5>
+
+        {{ form_start(form) }}
+            {{ form_row(form.pharmacyAddress) }}
+            <button type="submit" class="btn btn-primary mt-3">Получить статистику</button>
+        {{ form_end(form) }}
+
+    </div>
+
+    {% if selectedPharmacy is defined %}
+        <div class="container mt-5 shadow p-3 mb-5 bg-white rounded p-5">
+            <h5>Общее количество препаратов в выбранной аптеке со всех дистрибьюторов</h5>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">Аптека</th>
+                    <th scope="col">Количество</th>
+                </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ selectedPharmacy }}</td>
+                        <td>{{ commonQuantity }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <br>
+            <h5>Общее количество препаратов в выбранной аптеке по каждому дистрибьютору</h5>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">Аптека</th>
+                    <th scope="col">Дистрибьютор</th>
+                    <th scope="col">Препарат</th>
+                    <th scope="col">Количество</th>
+                </tr>
+                </thead>
+                <tbody>
+                    {% for preparation in preparations %}
+                        <tr>
+                            <td>{{ selectedPharmacy }}</td>
+                            <td>{{ preparation.distributor.name }}</td>
+                            <td>{{ preparation.name }}</td>
+                            <td>{{ preparation.quantity }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+{% endblock %}
