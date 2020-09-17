@@ -25,4 +25,4 @@
 
 ## Посмотреть видео на готовый результат
 
-* https://cloud.mail.ru/public/57Ci/4QFXzbrcV
+* https://cloud.mail.ru/public/FMtF/4tf2SujGy
