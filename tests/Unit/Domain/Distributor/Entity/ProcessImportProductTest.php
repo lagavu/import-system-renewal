@@ -38,7 +38,7 @@ class ProcessImportProductTest extends TestCase
         $preparedData = $processImportProduct->process();
 
         $this->assertNotEmpty($preparedData);
-        $this->assertCount(97, $preparedData);
+        $this->assertCount(100, $preparedData);
 
         /** @var Preparation $preparedPreparation */
         $preparedPreparation = $preparations[0];

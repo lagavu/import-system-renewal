@@ -79,16 +79,16 @@ class ProcessImportProduct
 
     private function addPreparationUndefined(string $data): void
     {
-        if ($data && !$this->getCurrentPreparationUndefined($this->collection)) {
+        if ($data && !$this->getCurrentPreparationUndefined($this->collection, $data)) {
             $preparationUndefined = new PreparationUndefined(Uuid::uuid4(), $data);
             $this->collection->add($preparationUndefined);
         }
     }
 
-    public function getCurrentPreparationUndefined(ArrayCollection $collection): ?PreparationUndefined
+    public function getCurrentPreparationUndefined(ArrayCollection $collection, string $data): ?PreparationUndefined
     {
-        $preparationUndefined = $collection->filter(function ($preparationUndefined) {
-            if ($preparationUndefined instanceof PreparationUndefined) {
+        $preparationUndefined = $collection->filter(function ($preparationUndefined) use ($data) {
+            if ($preparationUndefined instanceof PreparationUndefined && $preparationUndefined->getName() === $data) {
                 return $preparationUndefined;
             }
         });
