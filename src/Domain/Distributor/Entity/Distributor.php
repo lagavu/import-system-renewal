@@ -2,8 +2,6 @@
 
 namespace App\Domain\Distributor\Entity;
 
-use App\Domain\Preparation\Entity\Preparation;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\PersistentCollection;
 use Ramsey\Uuid\UuidInterface;
@@ -29,7 +27,6 @@ class Distributor
     private $name;
 
     /**
-     * @var ArrayCollection|Preparation[]
      * @ORM\OneToMany(targetEntity="App\Domain\Preparation\Entity\Preparation", mappedBy="distributor", cascade={"persist", "remove"})
      */
     private $preparations;
