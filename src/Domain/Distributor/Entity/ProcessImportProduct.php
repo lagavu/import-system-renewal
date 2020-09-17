@@ -4,13 +4,8 @@ namespace App\Domain\Distributor\Entity;
 
 use App\Domain\Distributor\Exception\IncorrectImportProductException;
 use App\Domain\Distributor\Service\ImportProductService;
-use App\Domain\Pharmacy\Collection\PharmacyCollection;
-use App\Domain\Pharmacy\Entity\Pharmacy;
-use App\Domain\Preparation\Collection\PreparationCollection;
-use App\Domain\Preparation\Collection\PreparationUndefinedCollection;
-use App\Domain\Preparation\Entity\Preparation;
-use App\Domain\Preparation\Entity\PreparationUndefined;
 use App\Domain\Preparation\Entity\PreparationData;
+use App\Domain\Preparation\Entity\PreparationUndefined;
 use Doctrine\Common\Collections\ArrayCollection;
 use Ramsey\Uuid\Uuid;
 use SplFileObject;
@@ -21,23 +16,14 @@ class ProcessImportProduct
     private $file;
     private $collection;
 
-    public function __construct(Distributor $distributor, SplFileObject $file)
+    public function __construct(Distributor $distributor, SplFileObject $file, ArrayCollection $collection)
     {
         $this->distributor = $distributor;
         $this->file = $file;
-        $this->collection = new ArrayCollection();
+        $this->collection = $collection;
     }
 
-    public function prepare(array $preparations, array $preparationsUndefined, array $pharmacies): ArrayCollection
-    {
-        PreparationCollection::addInCollection($preparations, $this->collection);
-        PreparationUndefinedCollection::addInCollection($preparationsUndefined, $this->collection);
-        PharmacyCollection::addInCollection($pharmacies, $this->collection);
-
-        return $this->processFile();
-    }
-
-    private function processFile(): ArrayCollection
+    public function process(): ArrayCollection
     {
         while (!$this->file->eof()) {
             $data = $this->file->fgets();
@@ -50,93 +36,63 @@ class ProcessImportProduct
     private function processData(string $data): void
     {
         try {
-            $preparedPreparationData = ImportProductService::prepare($data);
-
-            $this->processPreparation($preparedPreparationData);
+            $preparationData = ImportProductService::prepare($data);
+            $this->processPreparation($preparationData);
         } catch (IncorrectImportProductException $exception) {
             $this->addPreparationUndefined($data);
         }
     }
 
-    private function processPreparation(PreparationData $preparedPreparationData): void
+    private function processPreparation(PreparationData $preparationData): void
     {
-        if (PreparationCollection::exist($this->collection, $preparedPreparationData->getName())) {
-            $this->addPharmacyIfNotExistInCollection($preparedPreparationData);
+        if (!$this->collection->isEmpty() && $preparationData->getCurrentPreparation($this->collection)) {
+            $preparationData->addPharmacyIfNotExists($this->collection);
 
-            $this->increaseQuantity($preparedPreparationData);
+            $preparationData->increaseQuantity($this->collection);
         } else {
-            $this->addDataInCollection($preparedPreparationData);
+            $this->addDataInCollection($preparationData);
         }
     }
 
-    private function addPharmacyIfNotExistInCollection(PreparationData $preparedPreparationData): void
+    public function addDataInCollection(PreparationData $preparationData): void
     {
-        if (!PharmacyCollection::exist($this->collection, $preparedPreparationData->getAddress())) {
-            $this->addPharmacy($preparedPreparationData);
-        }
-    }
-
-    private function increaseQuantity(PreparationData $preparedPreparationData): void
-    {
-        $preparation = PreparationCollection::getByValue($this->collection, $preparedPreparationData->getName());
-        $preparation->addQuantity((int) $preparedPreparationData->getQuantity());
-    }
-
-    private function addDataInCollection(PreparationData $preparedPreparationData): void
-    {
-        if (PharmacyCollection::exist($this->collection, $preparedPreparationData->getAddress())) {
-            $this->addPreparationWithExistingPharmacy($preparedPreparationData);
+        if ($preparationData->getCurrentPharmacy($this->collection)) {
+            $this->addPreparationWithExistingPharmacy($preparationData);
         } else {
-            $this->addPreparationWithNotExistingPharmacy($preparedPreparationData);
+            $this->addPreparationWithNotExistingPharmacy($preparationData);
         }
     }
 
-    private function addPreparationWithExistingPharmacy(PreparationData $preparedPreparationData): void
+    private function addPreparationWithExistingPharmacy(PreparationData $preparationData): void
     {
-        $pharmacy = PharmacyCollection::getByValue($this->collection, $preparedPreparationData->getAddress());
+        $pharmacy = $preparationData->getCurrentPharmacy($this->collection);
 
-        $this->addPreparation($preparedPreparationData, $pharmacy);
+        $preparationData->addPreparation($this->collection, $pharmacy, $this->distributor);
     }
 
-    private function addPreparationWithNotExistingPharmacy(PreparationData $preparedPreparationData): void
+    private function addPreparationWithNotExistingPharmacy(PreparationData $preparationData): void
     {
-        $pharmacy = $this->addPharmacy($preparedPreparationData);
+        $pharmacy = $preparationData->addPharmacy($this->collection);
 
-        $this->addPreparation($preparedPreparationData, $pharmacy);
-    }
-
-    private function addPreparation(PreparationData $preparedPreparationData, Pharmacy $pharmacy): Preparation
-    {
-        $preparation = self::createPreparation($preparedPreparationData, $pharmacy, $this->distributor);
-        $this->collection->add($preparation);
-
-        return $preparation;
-    }
-
-    private function addPharmacy(PreparationData $preparedPreparationData): Pharmacy
-    {
-        $pharmacy = new Pharmacy(Uuid::uuid4(), $preparedPreparationData->getAddress());
-        $this->collection->add($pharmacy);
-
-        return $pharmacy;
+        $preparationData->addPreparation($this->collection, $pharmacy, $this->distributor);
     }
 
     private function addPreparationUndefined(string $data): void
     {
-        if ($data && !PreparationUndefinedCollection::exist($this->collection, $data)) {
+        if ($data && !$this->getCurrentPreparationUndefined($this->collection)) {
             $preparationUndefined = new PreparationUndefined(Uuid::uuid4(), $data);
             $this->collection->add($preparationUndefined);
         }
     }
 
-    private static function createPreparation(PreparationData $preparationData, Pharmacy $pharmacy, Distributor $distributor): Preparation
+    public function getCurrentPreparationUndefined(ArrayCollection $collection): ?PreparationUndefined
     {
-        return new Preparation(
-            Uuid::uuid4(),
-            $preparationData->getName(),
-            $preparationData->getQuantity(),
-            $pharmacy,
-            $distributor
-        );
+        $preparationUndefined = $collection->filter(function ($preparationUndefined) {
+            if ($preparationUndefined instanceof PreparationUndefined) {
+                return $preparationUndefined;
+            }
+        });
+
+        return !$preparationUndefined->isEmpty() ? $preparationUndefined->first() : null;
     }
 }
