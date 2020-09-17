@@ -3,7 +3,7 @@
 namespace App\Tests\Unit\Domain\Distributor\Entity;
 
 use App\Domain\Distributor\Entity\Distributor;
-use App\Domain\Distributor\Entity\Import;
+use App\Domain\Distributor\Entity\ProcessImportProduct;
 use App\Domain\Pharmacy\Entity\Pharmacy;
 use App\Domain\Preparation\Entity\Preparation;
 use App\Domain\Preparation\Entity\PreparationUndefined;
@@ -11,11 +11,11 @@ use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 use SplFileObject;
 
-class ImportTest extends TestCase
+class ProcessImportProductTest extends TestCase
 {
     private const IMPORT_FILE_WITH_PREPARATIONS_PATH = '/DataFixtures/ImportFileForDistributor/preparations.txt';
 
-    public function testSuccessfulCreationPreparationUndefined(): void
+    public function testSuccessfulDataProcessing(): void
     {
         $distributor = new Distributor( Uuid::uuid4(), 'Дистрибьютер 1');
         $pharmacy = new Pharmacy(Uuid::uuid4(), 'ул Зорге 3');
@@ -23,13 +23,15 @@ class ImportTest extends TestCase
         $pathToFolderTests = dirname(__DIR__, 4);
         $file = new SplFileObject($pathToFolderTests.self::IMPORT_FILE_WITH_PREPARATIONS_PATH);
 
-        $import = new Import($distributor, $file);
+        $import = new ProcessImportProduct($distributor, $file);
 
         $preparations = $this->createPreparations($distributor, $pharmacy);
         $preparationsUndefined = $this->createPreparationsUndefined();
         $pharmacies = $this->createPharmacies();
 
-        $preparedData = $import->prepareData($preparations, $preparationsUndefined, $pharmacies);
+        $preparedData = $import->prepare($preparations, $preparationsUndefined, $pharmacies);
+
+        $this->assertNotEmpty($preparedData);
 
         /** @var Preparation $preparedPreparation */
         $preparedPreparation = $preparations[0];

@@ -15,7 +15,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Ramsey\Uuid\Uuid;
 use SplFileObject;
 
-class Import
+class ProcessImportProduct
 {
     private $distributor;
     private $file;
@@ -28,7 +28,7 @@ class Import
         $this->collection = new ArrayCollection();
     }
 
-    public function prepareData(array $preparations, array $preparationsUndefined, array $pharmacies): ArrayCollection
+    public function prepare(array $preparations, array $preparationsUndefined, array $pharmacies): ArrayCollection
     {
         PreparationCollection::addInCollection($preparations, $this->collection);
         PreparationUndefinedCollection::addInCollection($preparationsUndefined, $this->collection);
