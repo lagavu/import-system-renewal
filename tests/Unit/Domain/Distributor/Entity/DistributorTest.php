@@ -8,7 +8,7 @@ use Ramsey\Uuid\Uuid;
 
 class DistributorTest extends TestCase
 {
-    public function testSuccessfulCreationPreparationUndefined(): void
+    public function testSuccessfulCreationDistributor(): void
     {
         $distributor = new Distributor(
             $id = Uuid::uuid4(),

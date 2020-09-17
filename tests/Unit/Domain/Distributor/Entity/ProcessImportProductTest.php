@@ -4,6 +4,7 @@ namespace App\Tests\Unit\Domain\Distributor\Entity;
 
 use App\Domain\Distributor\Entity\Distributor;
 use App\Domain\Distributor\Entity\ProcessImportProduct;
+use App\Domain\Distributor\Entity\ValueObject\ExistData;
 use App\Domain\Pharmacy\Entity\Pharmacy;
 use App\Domain\Preparation\Entity\Preparation;
 use App\Domain\Preparation\Entity\PreparationUndefined;
@@ -20,18 +21,24 @@ class ProcessImportProductTest extends TestCase
         $distributor = new Distributor( Uuid::uuid4(), 'Дистрибьютер 1');
         $pharmacy = new Pharmacy(Uuid::uuid4(), 'ул Зорге 3');
 
-        $pathToFolderTests = dirname(__DIR__, 4);
-        $file = new SplFileObject($pathToFolderTests.self::IMPORT_FILE_WITH_PREPARATIONS_PATH);
-
-        $import = new ProcessImportProduct($distributor, $file);
-
         $preparations = $this->createPreparations($distributor, $pharmacy);
         $preparationsUndefined = $this->createPreparationsUndefined();
         $pharmacies = $this->createPharmacies();
 
-        $preparedData = $import->prepare($preparations, $preparationsUndefined, $pharmacies);
+        $existData = new ExistData($preparations, $preparationsUndefined, $pharmacies);
+        $pathToFolderTests = dirname(__DIR__, 4);
+        $file = new SplFileObject($pathToFolderTests.self::IMPORT_FILE_WITH_PREPARATIONS_PATH);
+
+        $processImportProduct = new ProcessImportProduct(
+            $distributor,
+            $file,
+            $existData->getCollectionWithAllData()
+        );
+
+        $preparedData = $processImportProduct->process();
 
         $this->assertNotEmpty($preparedData);
+        $this->assertCount(97, $preparedData);
 
         /** @var Preparation $preparedPreparation */
         $preparedPreparation = $preparations[0];
