@@ -22,7 +22,6 @@ class PreparationComplianceTest extends TestCase
             'Препарат 10' => 'Десятый Препарат',
             'Препарат 11' => 'Одиннадцатый Препарат',
             'Препарат 12' => 'Двеннадцатый Препарат',
-
         ];
 
         $this->assertEquals($expectedPreparationComplianceNames, PreparationCompliance::NAMES);
