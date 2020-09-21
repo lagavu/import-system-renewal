@@ -1,44 +1,42 @@
 <?php
 
-namespace App\Tests\Unit\Domain\Distributor\Entity;
+namespace App\Tests\Unit\Domain\Distributor\Factory\FileDistributorFactory\FileDistributorTwo;
 
 use App\Domain\Distributor\Entity\Distributor;
-use App\Domain\Distributor\Entity\ProcessImportProduct;
 use App\Domain\Distributor\Entity\ValueObject\ExistData;
+use App\Domain\Distributor\Factory\FileDistributorFactory\FileDistributorFactory;
 use App\Domain\Pharmacy\Entity\Pharmacy;
 use App\Domain\Preparation\Entity\Preparation;
 use App\Domain\Preparation\Entity\PreparationUndefined;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
-use SplFileObject;
+use Symfony\Component\HttpFoundation\File\File;
 
-class ProcessImportProductTest extends TestCase
+class FileDistributorTwoTest extends TestCase
 {
-    private const IMPORT_FILE_WITH_PREPARATIONS_PATH = '/DataFixtures/ImportFileForDistributor/preparations.txt';
+    private const IMPORT_FILE_WITH_PREPARATIONS_PATH = '/DataFixtures/ImportFileForDistributor/distributor2.txt';
 
-    public function testSuccessfulDataProcessing(): void
+    public function testSuccessfulDataProcessingForDistributorTwo(): void
     {
-        $distributor = new Distributor( Uuid::uuid4(), 'Дистрибьютер 1');
+        $distributor = new Distributor( Uuid::uuid4(), 'Дистрибьютер 2');
         $pharmacy = new Pharmacy(Uuid::uuid4(), 'ул Зорге 3');
 
         $preparations = $this->createPreparations($distributor, $pharmacy);
         $preparationsUndefined = $this->createPreparationsUndefined();
         $pharmacies = $this->createPharmacies();
-
         $existData = new ExistData($preparations, $preparationsUndefined, $pharmacies);
-        $pathToFolderTests = dirname(__DIR__, 4);
-        $file = new SplFileObject($pathToFolderTests.self::IMPORT_FILE_WITH_PREPARATIONS_PATH);
 
-        $processImportProduct = new ProcessImportProduct(
-            $distributor,
-            $file,
-            $existData->getCollectionWithAllData()
-        );
+        $pathToFolderTests = dirname(__DIR__, 6);
+        $file = new File($pathToFolderTests.self::IMPORT_FILE_WITH_PREPARATIONS_PATH);
 
-        $preparedData = $processImportProduct->process();
+        $fileDistributorFactory = new FileDistributorFactory();
+        $fileDistributorFactory = $fileDistributorFactory->get($distributor->getName());
+        $preparedData = $fileDistributorFactory
+            ->buildFileDistributor()
+            ->process($distributor, $file, $existData);
 
         $this->assertNotEmpty($preparedData);
-        $this->assertCount(100, $preparedData);
+        $this->assertCount(98, $preparedData);
 
         /** @var Preparation $preparedPreparation */
         $preparedPreparation = $preparations[0];
@@ -46,7 +44,6 @@ class ProcessImportProductTest extends TestCase
         $this->assertInstanceOf(Preparation::class, $preparedPreparation);
         $this->assertTrue($preparedData->contains($preparedPreparation));
         $this->assertContains('Препарат ', $preparedPreparation->getName());
-        $this->assertNotEquals(20, $preparedPreparation->getQuantity());
         $this->assertEquals($pharmacy, $preparedPreparation->getPharmacy());
         $this->assertEquals($distributor, $preparedPreparation->getDistributor());
 

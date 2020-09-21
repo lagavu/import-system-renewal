@@ -4,7 +4,6 @@ namespace App\Tests\Unit\Domain\Distributor\Service;
 
 use App\Domain\Distributor\Exception\IncorrectImportProductException;
 use App\Domain\Distributor\Service\ImportProductService;
-use App\Domain\Preparation\Entity\PreparationData;
 use PHPUnit\Framework\TestCase;
 
 class ImportProductServiceTest extends TestCase
@@ -12,20 +11,13 @@ class ImportProductServiceTest extends TestCase
     /**
      * @dataProvider getCorrectData
      */
-    public function testCorrectImportData(string $dataPreparation, array $expectedData, PreparationData $expectedPreparationData): void
+    public function testCorrectImportData(string $dataPreparation, array $expectedData): void
     {
         $importService = new ImportProductService();
 
         $preparedData = $importService->prepare($dataPreparation);
 
-        $expectedName = $expectedData[0];
-        $expectedAddress = $expectedData[1];
-        $expectedQuantity = $expectedData[2];
-
-        $this->assertEquals($preparedData, $expectedPreparationData);
-        $this->assertEquals($expectedName, $expectedPreparationData->getName());
-        $this->assertEquals($expectedAddress, $expectedPreparationData->getAddress());
-        $this->assertEquals($expectedQuantity, $expectedPreparationData->getQuantity());
+        $this->assertEquals($preparedData, $expectedData);
     }
 
     public function getCorrectData(): array
@@ -34,12 +26,10 @@ class ImportProductServiceTest extends TestCase
             [
                 'пр-кт Маркса 15	Препарат 4	30',
                 ['Препарат 4', 'пр-кт Маркса 15', 30],
-                new PreparationData('Препарат 4', 'пр-кт Маркса 15', 30),
             ],
             [
                 'Двеннадцатый Препарат	Д-Ковальчук дом 270	53',
-                ['Препарат 12', 'ул Дуси Ковальчук 270', 53],
-                new PreparationData('Препарат 12', 'ул Дуси Ковальчук 270', 53),
+                ['Двеннадцатый Препарат', 'Д-Ковальчук дом 270', 53],
             ],
         ];
     }

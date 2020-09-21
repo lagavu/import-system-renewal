@@ -58,32 +58,6 @@ class ExistDataTest extends TestCase
         $this->assertInstanceOf(Pharmacy::class, $existData->getPharmacies()[0]);
     }
 
-    public function testSuccessfulMergeData(): void
-    {
-        $existData = new ExistData(
-            $this->preparations,
-            $this->preparationsUndefined,
-            $this->pharmacies
-        );
-
-        $this->assertCount(8, $existData->merge());
-    }
-
-    public function testSuccessfulInCollectionExistAllData(): void
-    {
-        $existData = new ExistData(
-            $this->preparations,
-            $this->preparationsUndefined,
-            $this->pharmacies
-        );
-
-        $collectionWithAllData = $existData->getCollectionWithAllData();
-
-        $this->assertInstanceOf(ArrayCollection::class, $collectionWithAllData);
-        $this->assertNotEmpty($collectionWithAllData);
-        $this->assertCount(8, $collectionWithAllData);
-    }
-
     private function createPreparations(Distributor $distributor, Pharmacy $pharmacy): array
     {
         $preparations = [];
