@@ -3,9 +3,6 @@
 namespace App\Domain\Distributor\Service;
 
 use App\Domain\Distributor\Exception\IncorrectImportProductException;
-use App\Domain\Pharmacy\Entity\ValueObject\PharmacyCompliance;
-use App\Domain\Preparation\Entity\PreparationData;
-use App\Domain\Preparation\Entity\ValueObject\PreparationCompliance;
 
 class ImportProductService
 {
@@ -17,7 +14,7 @@ class ImportProductService
     public const PHARMACY_ADDRESS = 1;
     public const PREPARATION_QUANTITY = 2;
 
-    public static function prepare(string $data): PreparationData
+    public static function prepare(string $data): array
     {
         $possibleData = self::makePossibleData($data);
 
@@ -25,7 +22,11 @@ class ImportProductService
             throw new IncorrectImportProductException();
         }
 
-        return self::createPreparationData(self::transform($possibleData));
+        if (!self::checkForCorrectSequence($possibleData)) {
+            return self::sorting($possibleData);
+        }
+
+        return $possibleData;
     }
 
     /**
@@ -63,24 +64,6 @@ class ImportProductService
     /**
      * @return string[]
      */
-    private static function transform(array $possibleData): array
-    {
-        if (!self::checkForCorrectSequence($possibleData)) {
-            return self::sorting($possibleData);
-        }
-
-        $preparationName = $possibleData[self::PREPARATION_NAME];
-        $pharmacyAddress = $possibleData[self::PHARMACY_ADDRESS];
-
-        $possibleData[self::PREPARATION_NAME] = array_search($preparationName, PreparationCompliance::NAMES);
-        $possibleData[self::PHARMACY_ADDRESS] = array_search($pharmacyAddress, PharmacyCompliance::ADDRESSES);
-
-        return $possibleData;
-    }
-
-    /**
-     * @return string[]
-     */
     private static function sorting(array $possibleData): array
     {
         $sortedData = [];
@@ -90,14 +73,5 @@ class ImportProductService
         $sortedData[] = $possibleData[self::PREPARATION_QUANTITY];
 
         return $sortedData;
-    }
-
-    private static function createPreparationData(array $possibleData): PreparationData
-    {
-        return new PreparationData(
-            $possibleData[ImportProductService::PREPARATION_NAME],
-            $possibleData[ImportProductService::PHARMACY_ADDRESS],
-            (int) $possibleData[ImportProductService::PREPARATION_QUANTITY]
-        );
     }
 }
